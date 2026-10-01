@@ -1,35 +1,42 @@
-import express, { Request, Response } from 'express';
-import webRoute from './routes/web';
+import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
-// Import cấu hình database để test kết nối khi chạy server
-import './config/database';
+import apiRoute from './routes/api';
+import webRoute from './routes/web';
+import { errorHandler } from './middlewares/errorHandler';
 
-const app = express();
-
-app.use(express.static(path.join(__dirname, 'public')));
 dotenv.config();
 
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware để parse JSON
+// Cấu hình Middleware cơ bản
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
-
-app.use(cors({
-    origin: 'http://localhost:5173', // Cổng Ionic App
-    credentials: true // Cho phép gửi kèm Cookie
-}));
-
 app.use(cookieParser());
 
-// Gắn các đường dẫn
-import apiRoute from './routes/api';
+// Cấu hình CORS mở cho Frontend (cả localhost và cloud deploy)
+app.use(
+  cors({
+    origin: true, // Cho phép mọi origin gửi request trong lúc development & demo
+    credentials: true,
+  })
+);
+
+// Gắn các đường dẫn Routes
 app.use('/', webRoute);
-app.use('/api', apiRoute); // Mọi API đều có tiền tố /api, ví dụ: /api/login
-// Bật server lên và nghe ở cổng 3000
+app.use('/api', apiRoute);
+
+// Middleware xử lý lỗi tập trung toàn hệ thống (BẮT BUỘC ĐẶT Ở CUỐI)
+app.use(errorHandler);
+
+// Khởi động server
 app.listen(PORT, () => {
-    console.log(`Server đang chạy tại: http://localhost:${PORT}`);
+  console.log(`🚀 Server Mini Reading Tracker đang chạy tại: http://localhost:${PORT}`);
+  console.log(`📡 API Endpoints sẵn sàng tại: http://localhost:${PORT}/api`);
 });
+
+export default app;
