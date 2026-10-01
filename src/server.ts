@@ -18,11 +18,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(cookieParser());
 
-// Cấu hình CORS mở cho Frontend (cả localhost và cloud deploy)
+// Cấu hình CORS mở toàn diện cho Frontend (Vercel, Localhost, VPS, Render)
 app.use(
   cors({
-    origin: true, // Cho phép mọi origin gửi request trong lúc development & demo
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
     credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
 
