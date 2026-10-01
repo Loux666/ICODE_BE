@@ -6,8 +6,8 @@
 
 ## 🔗 Liên kết Dự án & Demo
 
-- **Frontend Demo (Live):** `https://icode-fe.vercel.app` *(hoặc URL Vercel của bạn)*
-- **Backend API (Live):** `https://icode-be.onrender.com` *(hoặc URL Render của bạn)*
+- **Frontend Demo (Live):** [https://icode-fe.vercel.app](https://icode-fe.vercel.app)
+- **Backend API (Live):** [https://icode-be.onrender.com](https://icode-be.onrender.com)
 - **Frontend Repository:** [https://github.com/Loux666/ICODE_FE](https://github.com/Loux666/ICODE_FE)
 - **Backend Repository:** [https://github.com/Loux666/ICODE_BE](https://github.com/Loux666/ICODE_BE)
 
