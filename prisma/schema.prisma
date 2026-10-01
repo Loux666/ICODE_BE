@@ -7,16 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model users {
-  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  name       String    @db.VarChar(255)
-  email      String    @unique(map: "users_email_unique") @db.VarChar(255)
-  password          String    @db.VarChar(255)
-  phone             String?   @db.VarChar(50)
-  usertype          String    @default("user") @db.VarChar(50)
-  otp_code          String?   @db.VarChar(10)
-  otp_expires_at    DateTime? @db.Timestamp(0)
-  email_verified_at DateTime? @db.Timestamp(0)
-  created_at        DateTime? @default(now()) @db.Timestamp(0)
-  updated_at        DateTime? @updatedAt @db.Timestamp(0)
+enum ReadingStatus {
+  WANT_TO_READ // Muốn đọc
+  READING      // Đang đọc
+  COMPLETED    // Đã đọc
+}
+
+model Book {
+  id          Int           @id @default(autoincrement())
+  workId      String        @unique(map: "books_work_id_unique") @db.VarChar(100) // Khóa duy nhất từ Open Library (ví dụ: OL82563W / /works/OL82563W)
+  title       String        @db.VarChar(500)
+  author      String?       @db.VarChar(255)
+  coverUrl    String?       @db.VarChar(500)
+  publishYear Int?
+  totalPages  Int           @default(0)
+  description String?       @db.Text
+  subjects    String?       @db.Text // Chuỗi JSON hoặc danh sách chủ đề cách nhau dấu phẩy
+
+  // Quản lý trạng thái đọc & tiến độ cá nhân
+  status      ReadingStatus @default(WANT_TO_READ)
+  currentPage Int           @default(0)
+  rating      Int?          // Đánh giá 1 - 5 sao
+  notes       String?       @db.Text // Ghi chú cá nhân
+
+  // Mốc thời gian đọc
+  startDate   DateTime?     @db.DateTime(0) // Ngày bắt đầu đọc (khi chuyển sang READING lần đầu)
+  finishDate  DateTime?     @db.DateTime(0) // Ngày hoàn thành (khi chuyển sang COMPLETED)
+
+  createdAt   DateTime      @default(now()) @db.DateTime(0)
+  updatedAt   DateTime      @updatedAt @db.DateTime(0)
+
+  @@index([status])
+  @@map("books")
 }

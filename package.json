@@ -26,8 +26,11 @@
   },
   "scripts": {
     "postinstall": "prisma generate",
-    "start": "ts-node src/server.ts",
+    "start": "node dist/src/server.js",
     "dev": "nodemon -L --watch .env --watch src --ext ts,json,env --exec ts-node src/server.ts",
     "build": "tsc"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }
