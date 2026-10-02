@@ -15,17 +15,30 @@
 
 ## 📸 Demo & Giao diện (Screenshots)
 
-> *[Chèn ảnh chụp màn hình hoặc GIF Demo tại đây]*
+### 🖥️ Màn hình 1 — Tìm kiếm sách & Khám phá kho sách
 
-| Màn hình 1 — Tìm kiếm sách | Màn hình 2 — Chi tiết tác phẩm | Màn hình 3 — Tủ sách cá nhân |
-| :---: | :---: | :---: |
-| *(Screenshot Search Page)* | *(Screenshot Book Detail Modal)* | *(Screenshot Bookshelf Page)* |
+> Khám phá hàng triệu đầu sách toàn cầu từ Open Library, hỗ trợ gợi ý từ khóa, lọc phân trang và tự động nhận diện sách đã có trong tủ.
+
+![Màn hình 1 — Tìm kiếm sách](image.png)
+
+### 📖 Màn hình 2 — Chi tiết tác phẩm & Thêm vào tủ sách
+
+> Hiển thị đầy đủ thông tin: Ảnh bìa, tác giả, mô tả chi tiết, số trang, chủ đề, cùng tùy chọn trạng thái ban đầu (_Muốn đọc / Đang đọc / Đã đọc_) trước khi lưu.
+
+![Màn hình 2 — Chi tiết tác phẩm](image-1.png)
+
+### 📚 Màn hình 3 — Tủ sách cá nhân & Quản lý tiến độ đọc
+
+> Thống kê số lượng theo tab, thanh tiến độ đọc trực quan (%), cập nhật số trang đọc, đánh giá 1–5 sao, lưu cảm nhận và hộp thoại xác nhận xóa sách an toàn.
+
+![Màn hình 3 — Tủ sách cá nhân](image-2.png)
 
 ---
 
 ## 🛠️ Công nghệ Sử dụng (Tech Stack)
 
 ### **Backend (`ICODE_BE`)**
+
 - **Runtime & Framework:** Node.js (v20+), Express.js (v5)
 - **Ngôn ngữ:** TypeScript (Strict mode)
 - **Database & ORM:** MySQL 8.0 (Hosted trên Aiven Cloud), Prisma ORM
@@ -33,6 +46,7 @@
 - **Bảo mật & Middleware:** CORS (Cross-Origin Resource Sharing), Cookie Parser, Centralized Error Handling (`AppError`)
 
 ### **Frontend (`ICODE_FE`)**
+
 - **Framework & Build tool:** Vue 3 (Composition API `<script setup>`), Vite
 - **Ngôn ngữ:** TypeScript
 - **State Management:** Pinia Store
@@ -60,7 +74,7 @@ flowchart TD
         BookController["Book Controller"]
         OpenLibService["OpenLibrary Service (Proxy & Auto-Sync)"]
         BookshelfService["Bookshelf Service (CRUD & Stats)"]
-        
+
         Express --> Validator --> BookController
         BookController --> OpenLibService
         BookController --> BookshelfService
@@ -69,7 +83,7 @@ flowchart TD
     subgraph Data ["Data Storage & External Services"]
         MySQL[("Aiven Cloud MySQL 8.0\n(Prisma ORM)")]
         OpenLibAPI["Open Library Public REST API\n(search.json / works.json)"]
-        
+
         OpenLibService <-->|REST API| OpenLibAPI
         OpenLibService <-->|Cross-reference & Sync| MySQL
         BookshelfService <-->|CRUD & Aggregations| MySQL
@@ -79,10 +93,12 @@ flowchart TD
 ```
 
 ### **1. Mô hình Proxy Gateway (API Gateway / BFF)**
+
 - **Frontend không bao giờ gọi trực tiếp Open Library:** Toàn bộ request tìm kiếm (`/api/books/search`) và xem chi tiết (`/api/books/works/:id`) đều đi qua backend.
 - **Tích hợp kiểm tra chéo (Cross-referencing):** Khi tìm kiếm sách từ Open Library, backend tự động đối chiếu với cơ sở dữ liệu MySQL để gắn cờ `isInBookshelf: true/false` và trạng thái đọc hiện tại trước khi trả về cho Frontend.
 
 ### **2. Chiến lược Lưu trữ Snapshot & Lazy Auto-Sync**
+
 - Khi người dùng thêm sách vào tủ, backend lưu **Bản snapshot thông tin sách** (`workId`, `title`, `author`, `coverUrl`, `publishYear`, `description`, `subjects`) cùng **Dữ liệu cá nhân** (`status`, `currentPage`, `rating`, `notes`).
 - Khi người dùng mở xem chi tiết một cuốn sách đã có trong tủ, backend thực hiện **Lazy Auto-Sync** (cập nhật ngầm mô tả hoặc ảnh bìa mới nhất từ Open Library vào MySQL mà không làm gián đoạn trải nghiệm người dùng).
 
@@ -118,6 +134,7 @@ erDiagram
 ## 📡 Danh sách API Endpoints (API Documentation)
 
 Mọi API đều trả về cấu trúc JSON chuẩn:
+
 ```json
 {
   "success": true,
@@ -127,43 +144,47 @@ Mọi API đều trả về cấu trúc JSON chuẩn:
 ```
 
 ### **1. Sách & Open Library Proxy**
-| Method | Endpoint | Query / Param | Mô tả |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/books/search` | `?q=keyword&page=1&limit=20` | Tìm kiếm sách từ Open Library, đối chiếu cờ `isInBookshelf` |
-| `GET` | `/api/books/works/:workId` | `:workId` (e.g. `OL82563W`) | Xem chi tiết tác phẩm (kèm Fallback & Auto-sync ngầm) |
+
+| Method | Endpoint                   | Query / Param                | Mô tả                                                       |
+| :----- | :------------------------- | :--------------------------- | :---------------------------------------------------------- |
+| `GET`  | `/api/books/search`        | `?q=keyword&page=1&limit=20` | Tìm kiếm sách từ Open Library, đối chiếu cờ `isInBookshelf` |
+| `GET`  | `/api/books/works/:workId` | `:workId` (e.g. `OL82563W`)  | Xem chi tiết tác phẩm (kèm Fallback & Auto-sync ngầm)       |
 
 ### **2. Tủ sách cá nhân (Bookshelf)**
-| Method | Endpoint | Body / Param | Mô tả |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/bookshelf` | `?status=READING&search=...` | Lấy danh sách tủ sách, lọc theo tab & tìm kiếm nội bộ |
-| `GET` | `/api/bookshelf/stats` | Không | Lấy thống kê: tổng số sách, đang đọc, đã đọc xong, tổng trang đã đọc, rating TB |
-| `POST` | `/api/bookshelf` | JSON `AddBookPayload` | Thêm sách vào tủ (chống trùng `409 Conflict`, set status ban đầu) |
-| `PUT` | `/api/bookshelf/:id` | JSON `UpdateBookPayload` | Cập nhật tiến độ trang, đổi trạng thái đọc, chấm điểm sao, ghi chú |
-| `DELETE`| `/api/bookshelf/:id` | `:id` (ID sách trong DB) | Xóa sách khỏi tủ cá nhân |
+
+| Method   | Endpoint               | Body / Param                 | Mô tả                                                                           |
+| :------- | :--------------------- | :--------------------------- | :------------------------------------------------------------------------------ |
+| `GET`    | `/api/bookshelf`       | `?status=READING&search=...` | Lấy danh sách tủ sách, lọc theo tab & tìm kiếm nội bộ                           |
+| `GET`    | `/api/bookshelf/stats` | Không                        | Lấy thống kê: tổng số sách, đang đọc, đã đọc xong, tổng trang đã đọc, rating TB |
+| `POST`   | `/api/bookshelf`       | JSON `AddBookPayload`        | Thêm sách vào tủ (chống trùng `409 Conflict`, set status ban đầu)               |
+| `PUT`    | `/api/bookshelf/:id`   | JSON `UpdateBookPayload`     | Cập nhật tiến độ trang, đổi trạng thái đọc, chấm điểm sao, ghi chú              |
+| `DELETE` | `/api/bookshelf/:id`   | `:id` (ID sách trong DB)     | Xóa sách khỏi tủ cá nhân                                                        |
 
 ---
 
 ## ⚙️ Các Quy tắc Nghiệp vụ (Business Rules Compliance)
 
-| # | Quy tắc nghiệp vụ | Cách triển khai trong mã nguồn |
-| :-: | :--- | :--- |
-| **1** | **Chống trùng lặp sách** | Kiểm tra `workId` trước khi tạo, ném lỗi `409 Conflict` nếu đã tồn tại. |
-| **2** | **Ràng buộc số trang** | Kiểm tra $0 \le \text{currentPage} \le \text{totalPages}$. Nếu vượt quá $\rightarrow$ ném lỗi `400 Bad Request`. |
-| **3** | **Đánh giá sao** | Điểm đánh giá giới hạn trong đoạn $[1, 5]$ số nguyên, hoặc `null`. |
-| **4** | **Tự động chuyển trạng thái** | Khi $\text{currentPage} == \text{totalPages} > 0 \rightarrow$ tự động chuyển trạng thái sang `COMPLETED` (`Đã đọc`). |
-| **5** | **Ghi nhận mốc thời gian** | - Khi chuyển sang `READING` lần đầu $\rightarrow$ ghi nhận `startDate`.<br>- Khi chuyển sang `COMPLETED` $\rightarrow$ ghi nhận `finishDate`. |
-| **6** | **Validation dữ liệu** | Sử dụng Zod schema middleware chuẩn hóa, bắt lỗi tập trung và trả về danh sách lỗi cụ thể (`field`, `message`). |
+|   #   | Quy tắc nghiệp vụ             | Cách triển khai trong mã nguồn                                                                                                                |
+| :---: | :---------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1** | **Chống trùng lặp sách**      | Kiểm tra `workId` trước khi tạo, ném lỗi `409 Conflict` nếu đã tồn tại.                                                                       |
+| **2** | **Ràng buộc số trang**        | Kiểm tra $0 \le \text{currentPage} \le \text{totalPages}$. Nếu vượt quá $\rightarrow$ ném lỗi `400 Bad Request`.                              |
+| **3** | **Đánh giá sao**              | Điểm đánh giá giới hạn trong đoạn $[1, 5]$ số nguyên, hoặc `null`.                                                                            |
+| **4** | **Tự động chuyển trạng thái** | Khi $\text{currentPage} == \text{totalPages} > 0 \rightarrow$ tự động chuyển trạng thái sang `COMPLETED` (`Đã đọc`).                          |
+| **5** | **Ghi nhận mốc thời gian**    | - Khi chuyển sang `READING` lần đầu $\rightarrow$ ghi nhận `startDate`.<br>- Khi chuyển sang `COMPLETED` $\rightarrow$ ghi nhận `finishDate`. |
+| **6** | **Validation dữ liệu**        | Sử dụng Zod schema middleware chuẩn hóa, bắt lỗi tập trung và trả về danh sách lỗi cụ thể (`field`, `message`).                               |
 
 ---
 
 ## 💻 Hướng dẫn Cài đặt & Chạy Local (Local Development)
 
 ### **1. Yêu cầu môi trường**
+
 - Node.js $\ge$ 18.x
 - npm $\ge$ 9.x
 - Kết nối Internet (để kết nối Aiven MySQL và Open Library)
 
 ### **2. Cài đặt Backend (`Express_Base`)**
+
 ```bash
 # 1. Di chuyển vào thư mục backend
 cd Express_Base
@@ -186,6 +207,7 @@ npm run dev
 ```
 
 ### **3. Cài đặt Frontend (`Base-Vue`)**
+
 ```bash
 # 1. Mở một terminal khác và di chuyển vào thư mục frontend
 cd Base-Vue
@@ -206,11 +228,13 @@ npm run dev
 ## 🚀 Hướng dẫn Deploy lên Môi trường Cloud
 
 ### **1. Database (MySQL trên Aiven Cloud)**
+
 - Tạo một MySQL Service miễn phí trên [Aiven.io](https://aiven.io).
 - Lấy chuỗi kết nối dạng:
   `DATABASE_URL=mysql://avnadmin:PASSWORD@HOST:PORT/defaultdb?ssl-mode=REQUIRED`
 
 ### **2. Backend trên Render.com**
+
 - Tạo **New Web Service** trỏ tới repository `ICODE_BE`.
 - **Runtime:** `Node`
 - **Build Command:** `npm install && npm run build`
@@ -220,6 +244,7 @@ npm run dev
   - `PORT`: `3000`
 
 ### **3. Frontend trên Vercel.com**
+
 - Tạo **New Project** trỏ tới repository `ICODE_FE`.
 - **Framework Preset:** `Vite`
 - **Environment Variables:**
@@ -230,11 +255,13 @@ npm run dev
 ## 💡 Giả định, Hạn chế & Hướng Cải thiện (Future Improvements)
 
 ### **Giả định & Hạn chế:**
-- Ứng dụng thiết kế cho một người dùng (*single-user mode*), chưa có hệ thống Authentication (JWT/OAuth2) để phân tách tủ sách của nhiều tài khoản khác nhau.
+
 - Tốc độ tìm kiếm Open Library phụ thuộc vào phản hồi của máy chủ công cộng Open Library (Mỹ).
 
 ### **Hướng cải thiện nếu có thêm thời gian:**
-1. **Caching Layer:** Tích hợp Redis để cache kết quả tìm kiếm sách và chi tiết tác phẩm thường truy cập, giảm tải cho Open Library API.
-2. **Đa người dùng (Multi-tenancy):** Thêm chức năng Đăng ký / Đăng nhập (JWT + OAuth Google/GitHub) để mỗi người dùng có tủ sách riêng.
-3. **Mục tiêu đọc sách năm (Reading Goal Challenge):** Thêm biểu đồ tiến độ đọc theo tháng/năm và đặt mục tiêu số cuốn sách cần đọc trong năm.
-4. **PWA & Offline Mode:** Hỗ trợ Progressive Web App để người dùng có thể xem và cập nhật tiến độ đọc ngay cả khi mất mạng.
+
+**Caching Layer:** Tích hợp Redis để cache kết quả tìm kiếm sách và chi tiết tác phẩm thường truy cập, giảm tải cho Open Library API.
+
+**PWA & Offline Mode:** Hỗ trợ Progressive Web App để người dùng có thể xem và cập nhật tiến độ đọc ngay cả khi mất mạng.
+
+**Responsive:** Hỗ trợ responsive cho mobile
